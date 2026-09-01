@@ -1,5 +1,14 @@
 import sys
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler
+
+# Dummy handler for Vercel Python runtime inspector
+class app(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b"<h1>News NIT IIT Sponsor Engine</h1><p>Streamlit Dashboard running locally or on Streamlit Cloud.</p>")
 
 # Add project root to sys.path at the absolute top
 BASE_DIR = Path(__file__).resolve().parent.parent
