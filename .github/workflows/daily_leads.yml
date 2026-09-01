@@ -1,0 +1,50 @@
+name: Daily Sponsor Lead Engine
+
+on:
+  schedule:
+    # Runs every day at 03:30 UTC (9:00 AM IST)
+    - cron: '30 3 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  run-daily-leads:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Daily Sponsorship Discovery
+        env:
+          DRY_RUN: ${{ secrets.DRY_RUN || 'false' }}
+          APPROVAL_REQUIRED: ${{ secrets.APPROVAL_REQUIRED || 'true' }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          LLM_PROVIDER: 'mock'
+        run: |
+          python main.py run-daily
+
+      - name: Commit and Push Updated Data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sponsor_engine.db logs/ || true
+          if git diff --staged --quiet; then
+            echo "No database changes to commit."
+          else
+            git commit -m "auto: Daily sponsor leads execution $(date -u +'%Y-%m-%d')"
+            git push origin main
+          fi
