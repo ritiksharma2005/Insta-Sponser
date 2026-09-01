@@ -253,7 +253,8 @@ class SQLiteDatabase:
         if not conditions:
             return None
 
-        query = f"SELECT * FROM leads WHERE {" OR ".join(conditions)} LIMIT 1"
+        where_clause = " OR ".join(conditions)
+        query = f"SELECT * FROM leads WHERE {where_clause} LIMIT 1"
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(query, params)
