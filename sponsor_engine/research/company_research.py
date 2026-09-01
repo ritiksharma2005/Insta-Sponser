@@ -17,7 +17,7 @@ class CompanyResearcher:
         """Conducts thorough public research on a candidate business."""
         logger.info(f"Researching candidate: '{candidate.business_name}' in category '{candidate.category}'")
 
-        ig_data = self.ig_researcher.research_profile(candidate.instagram, candidate.snippet)
+        ig_data = self.ig_researcher.research_profile(candidate.instagram, candidate.snippet, candidate.business_name, candidate.website)
         web_data = self.web_researcher.research_website(candidate.website, candidate.snippet)
 
         # Evaluate target audience relevance
