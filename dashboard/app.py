@@ -157,19 +157,20 @@ elif nav_option == "✅ Human Approval Queue":
     st.title("✅ Lead Review & Approval Queue")
     st.caption("Review AI-qualified leads and personalized DM messages before outreach")
 
-    pending_leads = approval_mgr.get_pending_leads()
+    all_leads = db.get_all_leads()
+    pending_leads = [l for l in all_leads if l.status in ("APPROVAL_PENDING", "APPROVED")]
 
     if not pending_leads:
-        st.success("🎉 No pending leads! All discovered leads have been reviewed.")
+        st.success("🎉 No pending leads! All discovered leads have been contacted or reviewed.")
     else:
-        st.info(f"Showing {len(pending_leads)} lead(s) awaiting your review.")
+        st.info(f"Showing {len(pending_leads)} lead(s) ready for review or outreach delivery.")
 
         for lead in pending_leads:
             with st.container():
                 st.markdown(f"""
                 <div class="lead-card">
                     <h3>{lead.business_name} <span class="badge-{lead.lead_tier.lower()}">{lead.lead_tier} ({lead.lead_score}/100)</span></h3>
-                    <p><b>Category:</b> {lead.category} | <b>Location:</b> {lead.city}, {lead.state} | <b>Instagram:</b> {lead.instagram}</p>
+                    <p><b>Category:</b> {lead.category} | <b>Location:</b> {lead.city}, {lead.state} | <b>Instagram:</b> {lead.instagram} | <b>Status:</b> <code>{lead.status}</code></p>
                     <p><b>Why Suitable:</b> {lead.why_suitable}</p>
                     <p><b>Suggested Collaboration:</b> {lead.suggested_collaboration}</p>
                 </div>
@@ -187,17 +188,18 @@ elif nav_option == "✅ Human Approval Queue":
 
                 with col2:
                     st.write("**Action:**")
-                    if st.button("👍 Approve Lead", key=f"app_{lead.lead_id}", use_container_width=True):
+                    button_label = "🚀 Send / Retry DM" if lead.status == "APPROVED" else "👍 Approve & Send DM"
+                    if st.button(button_label, key=f"app_{lead.lead_id}", use_container_width=True):
                         approval_mgr.approve_lead(lead.lead_id, custom_message=edited_msg)
                         
-                        # Trigger dry-run or live outreach
+                        # Trigger live outreach
                         lead_obj = db.get_lead_by_id(lead.lead_id)
                         success, msg = sender.send_outreach(lead_obj)
                         
                         if success:
-                            st.success(f"✅ Approved '{lead.business_name}'! ({msg})")
+                            st.success(f"✅ Sent DM to '{lead.business_name}'! ({msg})")
                         else:
-                            st.error(f"⚠️ Approved '{lead.business_name}', but live outreach failed: {msg}")
+                            st.error(f"⚠️ Live outreach failed: {msg}")
                         st.rerun()
 
                     if st.button("❌ Reject Lead", key=f"rej_{lead.lead_id}", use_container_width=True):
