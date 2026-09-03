@@ -207,6 +207,11 @@ elif nav_option == "✅ Human Approval Queue":
                         st.error(f"Rejected '{lead.business_name}'.")
                         st.rerun()
 
+                    handle_clean = lead.instagram.lstrip("@").strip()
+                    if handle_clean and handle_clean != "Not Available":
+                        ig_url = f"https://ig.me/m/{handle_clean}"
+                        st.markdown(f'<a href="{ig_url}" target="_blank" style="display: block; text-align: center; background-color: #E1306C; color: white; padding: 8px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 8px;">💬 Open IG Chat</a>', unsafe_allow_html=True)
+
                 st.markdown("---")
 
 # 3. PIPELINE TRACKER
