@@ -192,8 +192,12 @@ elif nav_option == "✅ Human Approval Queue":
                         
                         # Trigger dry-run or live outreach
                         lead_obj = db.get_lead_by_id(lead.lead_id)
-                        sender.send_outreach(lead_obj)
-                        st.success(f"Approved '{lead.business_name}'!")
+                        success, msg = sender.send_outreach(lead_obj)
+                        
+                        if success:
+                            st.success(f"✅ Approved '{lead.business_name}'! ({msg})")
+                        else:
+                            st.error(f"⚠️ Approved '{lead.business_name}', but live outreach failed: {msg}")
                         st.rerun()
 
                     if st.button("❌ Reject Lead", key=f"rej_{lead.lead_id}", use_container_width=True):
