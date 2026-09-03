@@ -1,7 +1,7 @@
 import logging
 import requests
 from typing import Tuple, Dict, Any
-from config.settings import get_settings
+from config.settings import get_settings, reload_settings
 from sponsor_engine.database.models import Lead, OutreachRecord
 from sponsor_engine.database.sqlite_db import SQLiteDatabase
 
@@ -19,6 +19,8 @@ class InstagramSender:
         Executes outreach DM for an approved lead.
         If DRY_RUN=true, simulates outreach safely.
         """
+        self.settings = reload_settings()
+
         if lead.status != "APPROVED":
             return False, f"Lead '{lead.business_name}' is not in APPROVED status (Current: {lead.status})"
 

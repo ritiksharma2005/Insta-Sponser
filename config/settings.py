@@ -6,41 +6,58 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+def get_config_val(key: str, default: str = "") -> str:
+    """Helper to fetch config value from os.getenv or streamlit.secrets."""
+    val = os.getenv(key, "")
+    if not val:
+        try:
+            import streamlit as st
+            if hasattr(st, "secrets") and key in st.secrets:
+                val = str(st.secrets[key])
+        except Exception:
+            pass
+    return val if val else default
+
 class Settings:
     """Application Settings and Configuration parameters."""
     
-    # System Flags
-    DRY_RUN: bool = os.getenv("DRY_RUN", "true").lower() in ("true", "1", "yes")
-    APPROVAL_REQUIRED: bool = os.getenv("APPROVAL_REQUIRED", "true").lower() in ("true", "1", "yes")
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    
-    # Execution Limits
-    DAILY_OUTREACH_LIMIT: int = int(os.getenv("DAILY_OUTREACH_LIMIT", "5"))
-    MAX_RESEARCH_PER_DAY: int = int(os.getenv("MAX_RESEARCH_PER_DAY", "20"))
-    MAX_SEARCH_REQUESTS: int = int(os.getenv("MAX_SEARCH_REQUESTS", "10"))
-    MAX_FOLLOWUPS: int = int(os.getenv("MAX_FOLLOWUPS", "2"))
-    
-    # API & Keys
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "gemini")
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    SEARCH_API_KEY: str = os.getenv("SEARCH_API_KEY", "")
-    SEARCH_ENGINE_ID: str = os.getenv("SEARCH_ENGINE_ID", "")
-    
-    # Meta / Instagram
-    META_ACCESS_TOKEN: str = os.getenv("META_ACCESS_TOKEN", "")
-    INSTAGRAM_BUSINESS_ACCOUNT_ID: str = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "")
-    META_APP_ID: str = os.getenv("META_APP_ID", "")
-    META_APP_SECRET: str = os.getenv("META_APP_SECRET", "")
-    
-    # Google Sheets
-    GOOGLE_SHEETS_CREDENTIALS_JSON: str = os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON", "")
-    GOOGLE_SHEET_ID: str = os.getenv("GOOGLE_SHEET_ID", "")
-    GOOGLE_SHEET_TITLE: str = os.getenv("GOOGLE_SHEET_TITLE", "News NIT IIT Sponsorship Pipeline")
-    
-    # Storage Paths
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent
-    SQLITE_DB_PATH: Path = BASE_DIR / os.getenv("SQLITE_DB_PATH", "data/sponsor_engine.db")
+    def __init__(self):
+        # System Flags
+        dry_str = get_config_val("DRY_RUN", "true").lower()
+        self.DRY_RUN: bool = dry_str in ("true", "1", "yes")
+        
+        app_str = get_config_val("APPROVAL_REQUIRED", "true").lower()
+        self.APPROVAL_REQUIRED: bool = app_str in ("true", "1", "yes")
+        
+        self.LOG_LEVEL: str = get_config_val("LOG_LEVEL", "INFO")
+        
+        # Execution Limits
+        self.DAILY_OUTREACH_LIMIT: int = int(get_config_val("DAILY_OUTREACH_LIMIT", "5"))
+        self.MAX_RESEARCH_PER_DAY: int = int(get_config_val("MAX_RESEARCH_PER_DAY", "20"))
+        self.MAX_SEARCH_REQUESTS: int = int(get_config_val("MAX_SEARCH_REQUESTS", "10"))
+        self.MAX_FOLLOWUPS: int = int(get_config_val("MAX_FOLLOWUPS", "2"))
+        
+        # API & Keys
+        self.LLM_PROVIDER: str = get_config_val("LLM_PROVIDER", "gemini")
+        self.OPENAI_API_KEY: str = get_config_val("OPENAI_API_KEY", "")
+        self.GEMINI_API_KEY: str = get_config_val("GEMINI_API_KEY", "")
+        self.SEARCH_API_KEY: str = get_config_val("SEARCH_API_KEY", "")
+        self.SEARCH_ENGINE_ID: str = get_config_val("SEARCH_ENGINE_ID", "")
+        
+        # Meta / Instagram
+        self.META_ACCESS_TOKEN: str = get_config_val("META_ACCESS_TOKEN", "")
+        self.INSTAGRAM_BUSINESS_ACCOUNT_ID: str = get_config_val("INSTAGRAM_BUSINESS_ACCOUNT_ID", "")
+        self.META_APP_ID: str = get_config_val("META_APP_ID", "")
+        self.META_APP_SECRET: str = get_config_val("META_APP_SECRET", "")
+        
+        # Google Sheets
+        self.GOOGLE_SHEETS_CREDENTIALS_JSON: str = get_config_val("GOOGLE_SHEETS_CREDENTIALS_JSON", "")
+        self.GOOGLE_SHEET_ID: str = get_config_val("GOOGLE_SHEET_ID", "")
+        self.GOOGLE_SHEET_TITLE: str = get_config_val("GOOGLE_SHEET_TITLE", "News NIT IIT Sponsorship Pipeline")
+        
+        # Storage Paths
+        self.BASE_DIR: Path = Path(__file__).resolve().parent.parent
+        self.SQLITE_DB_PATH: Path = self.BASE_DIR / get_config_val("SQLITE_DB_PATH", "data/sponsor_engine.db")
 
 _settings_instance = None
 
@@ -49,4 +66,10 @@ def get_settings() -> Settings:
     global _settings_instance
     if _settings_instance is None:
         _settings_instance = Settings()
+    return _settings_instance
+
+def reload_settings() -> Settings:
+    """Force reloads settings from environment or secrets."""
+    global _settings_instance
+    _settings_instance = Settings()
     return _settings_instance
