@@ -110,6 +110,21 @@ nav_option = st.sidebar.radio(
     ["📊 Dashboard Overview", "✅ Human Approval Queue", "🔄 Pipeline Tracker", "📈 Analytics & Insights", "⚙️ Media Profile & Config"]
 )
 
+def safe_reset_leads(db_instance):
+    """Safely resets all lead statuses to APPROVAL_PENDING across all environment versions."""
+    try:
+        if hasattr(db_instance, "reset_all_leads_to_pending"):
+            return db_instance.reset_all_leads_to_pending()
+    except Exception:
+        pass
+    
+    with db_instance._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE leads SET status = 'APPROVAL_PENDING', last_contacted = 'Not Contacted'")
+        count = cursor.rowcount
+        conn.commit()
+        return count
+
 # Run Daily Job & Utility Buttons in Sidebar
 st.sidebar.markdown("---")
 if st.sidebar.button("🚀 Run Daily Lead Discovery", use_container_width=True):
@@ -120,7 +135,7 @@ if st.sidebar.button("🚀 Run Daily Lead Discovery", use_container_width=True):
         st.rerun()
 
 if st.sidebar.button("🔄 Reset Leads to Pending Queue", use_container_width=True):
-    reset_cnt = db.reset_all_leads_to_pending()
+    reset_cnt = safe_reset_leads(db)
     st.sidebar.success(f"Reset {reset_cnt} leads to Approval Queue!")
     st.rerun()
 
@@ -165,7 +180,7 @@ elif nav_option == "✅ Human Approval Queue":
     top_col1, top_col2 = st.columns([3, 1])
     with top_col2:
         if st.button("🔄 Reset All Leads to Pending", key="top_reset_btn", use_container_width=True):
-            r_cnt = db.reset_all_leads_to_pending()
+            r_cnt = safe_reset_leads(db)
             st.success(f"Reset {r_cnt} leads!")
             st.rerun()
 

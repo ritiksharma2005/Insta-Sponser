@@ -45,3 +45,14 @@ class ApprovalManager:
         self.db.insert_or_update_lead(lead)
         logger.info(f"Updated outreach message for Lead ID {lead_id}.")
         return True
+
+    def reset_all_leads_to_pending(self) -> int:
+        """Resets all leads to APPROVAL_PENDING status."""
+        if hasattr(self.db, "reset_all_leads_to_pending"):
+            return self.db.reset_all_leads_to_pending()
+        with self.db._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE leads SET status = 'APPROVAL_PENDING', last_contacted = 'Not Contacted'")
+            count = cursor.rowcount
+            conn.commit()
+            return count
