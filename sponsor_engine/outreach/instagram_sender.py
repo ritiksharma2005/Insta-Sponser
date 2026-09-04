@@ -63,8 +63,9 @@ class InstagramSender:
                 err_code = err_obj.get("code")
                 err_msg = err_obj.get("message", response.text)
                 
-                # Check for Meta Authentication / Session / Token Expiry Errors (e.g. code 190, 102, 100)
-                if err_code in (190, 102, 100, 4) or any(term in str(err_msg).lower() for term in ("token", "session", "expired", "oauth")):
+                # Check specifically for Meta Authentication / Session / Token Expiry Errors (e.g. code 190, 102, expired token)
+                is_token_err = err_code in (190, 102) or any(term in str(err_msg).lower() for term in ("session has expired", "invalid access token", "error validating access token", "oauth"))
+                if is_token_err:
                     logger.error(f"Meta Graph API Token Error ({err_code}): {err_msg}")
                     return False, f"Meta Token Error (Code {err_code}): {err_msg}. Please update META_ACCESS_TOKEN in Streamlit Secrets!"
 
