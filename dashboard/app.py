@@ -140,6 +140,17 @@ if st.sidebar.button("🔄 Reset Leads to Pending Queue", use_container_width=Tr
     st.rerun()
 
 st.sidebar.markdown("---")
+token_input = st.sidebar.text_input(
+    "🔑 Direct Meta Token Paste:",
+    value=st.session_state.get("META_ACCESS_TOKEN", ""),
+    type="password",
+    help="Paste your fresh Meta Access Token here to use it immediately!"
+)
+if token_input.strip():
+    st.session_state["META_ACCESS_TOKEN"] = token_input.strip()
+
+settings = get_settings()
+
 tok_preview = f"`{settings.META_ACCESS_TOKEN[:12]}...`" if settings.META_ACCESS_TOKEN else "`MISSING`"
 st.sidebar.info(f"**DRY RUN Mode**: `{settings.DRY_RUN}`\n\n**Active Token**: {tok_preview}")
 

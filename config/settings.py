@@ -7,11 +7,13 @@ env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 def get_config_val(key: str, default: str = "") -> str:
-    """Helper to fetch config value from streamlit.secrets first, then os.getenv."""
+    """Helper to fetch config value from st.session_state, streamlit.secrets, or os.getenv."""
     val = ""
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and key in st.secrets:
+        if hasattr(st, "session_state") and key in st.session_state and st.session_state[key]:
+            val = str(st.session_state[key])
+        elif hasattr(st, "secrets") and key in st.secrets:
             val = str(st.secrets[key])
     except Exception:
         pass
@@ -62,17 +64,10 @@ class Settings:
         self.BASE_DIR: Path = Path(__file__).resolve().parent.parent
         self.SQLITE_DB_PATH: Path = self.BASE_DIR / get_config_val("SQLITE_DB_PATH", "data/sponsor_engine.db")
 
-_settings_instance = None
-
 def get_settings() -> Settings:
-    """Singleton getter for application settings."""
-    global _settings_instance
-    if _settings_instance is None:
-        _settings_instance = Settings()
-    return _settings_instance
+    """Returns fresh application settings, dynamically reading st.secrets and env."""
+    return Settings()
 
 def reload_settings() -> Settings:
     """Force reloads settings from environment or secrets."""
-    global _settings_instance
-    _settings_instance = Settings()
-    return _settings_instance
+    return Settings()
