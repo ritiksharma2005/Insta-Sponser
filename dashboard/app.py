@@ -145,20 +145,6 @@ if st.sidebar.button("🔄 Reset Leads to Pending Queue", use_container_width=Tr
     st.rerun()
 
 st.sidebar.markdown("---")
-token_input = st.sidebar.text_input(
-    "🔑 Direct Meta Token Paste:",
-    value=st.session_state.get("META_ACCESS_TOKEN", ""),
-    type="password",
-    help="Paste your fresh Meta Access Token here to use it immediately!"
-)
-if token_input.strip():
-    # If a new token is pasted, clear old failed outreach error messages from session state
-    if st.session_state.get("META_ACCESS_TOKEN") != token_input.strip():
-        keys_to_clear = [k for k in st.session_state.keys() if k.startswith("outreach_res_")]
-        for k in keys_to_clear:
-            del st.session_state[k]
-    st.session_state["META_ACCESS_TOKEN"] = token_input.strip()
-
 settings = get_settings()
 
 tok_preview = f"`{settings.META_ACCESS_TOKEN[:12]}...`" if settings.META_ACCESS_TOKEN else "`MISSING`"
@@ -225,16 +211,6 @@ elif nav_option == "✅ Human Approval Queue":
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Display persistent outreach result banner if available
-                res_key = f"outreach_res_{lead.lead_id}"
-                if res_key in st.session_state:
-                    succ, res_msg = st.session_state[res_key]
-                    if succ:
-                        st.success(f"✅ {res_msg}")
-                    else:
-                        st.error(f"⚠️ Live Outreach Failed: {res_msg}")
-                        st.warning("💡 **How to fix:** Generate a fresh Meta Access Token at [developers.facebook.com/tools/explorer](https://developers.facebook.com/tools/explorer/) and paste it into **Streamlit Cloud Secrets** under `META_ACCESS_TOKEN`. Alternatively, use **`💬 Open IG Chat`** to message directly!")
-
                 col1, col2 = st.columns([3, 1])
 
                 with col1:
@@ -255,12 +231,15 @@ elif nav_option == "✅ Human Approval Queue":
                         lead_obj = db.get_lead_by_id(lead.lead_id)
                         success, msg = sender.send_outreach(lead_obj)
                         
-                        st.session_state[f"outreach_res_{lead.lead_id}"] = (success, msg)
+                        if success:
+                            st.success(f"✅ {msg}")
+                        else:
+                            st.error(f"⚠️ {msg}")
                         st.rerun()
 
                     if st.button("❌ Reject Lead", key=f"rej_{lead.lead_id}", use_container_width=True):
                         approval_mgr.reject_lead(lead.lead_id, reason="User rejected in dashboard")
-                        st.session_state[f"outreach_res_{lead.lead_id}"] = (False, f"Rejected '{lead.business_name}'.")
+                        st.error(f"Rejected '{lead.business_name}'.")
                         st.rerun()
 
                     handle_clean = lead.instagram.lstrip("@").strip()
