@@ -219,6 +219,15 @@ class SQLiteDatabase:
             rows = cursor.fetchall()
             return [Lead(**dict(row)) for row in rows]
 
+    def reset_all_leads_to_pending(self) -> int:
+        """Resets all leads to APPROVAL_PENDING status so they can be re-reviewed and sent."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE leads SET status = 'APPROVAL_PENDING', last_contacted = 'Not Contacted'")
+            count = cursor.rowcount
+            conn.commit()
+            return count
+
     def get_lead_by_id(self, lead_id: str) -> Optional[Lead]:
         """Fetch lead by lead_id."""
         with self._get_connection() as conn:

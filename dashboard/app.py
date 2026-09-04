@@ -110,7 +110,7 @@ nav_option = st.sidebar.radio(
     ["📊 Dashboard Overview", "✅ Human Approval Queue", "🔄 Pipeline Tracker", "📈 Analytics & Insights", "⚙️ Media Profile & Config"]
 )
 
-# Run Daily Job Button in Sidebar
+# Run Daily Job & Utility Buttons in Sidebar
 st.sidebar.markdown("---")
 if st.sidebar.button("🚀 Run Daily Lead Discovery", use_container_width=True):
     with st.spinner("Executing 12-step lead discovery pipeline..."):
@@ -118,6 +118,11 @@ if st.sidebar.button("🚀 Run Daily Lead Discovery", use_container_width=True):
         res = job.run_daily_pipeline()
         st.sidebar.success(f"Discovered {len(res['top_leads'])} new top prospects!")
         st.rerun()
+
+if st.sidebar.button("🔄 Reset Leads to Pending Queue", use_container_width=True):
+    reset_cnt = db.reset_all_leads_to_pending()
+    st.sidebar.success(f"Reset {reset_cnt} leads to Approval Queue!")
+    st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.info(f"**DRY RUN Mode**: `{settings.DRY_RUN}`\n\n**Approval Required**: `{settings.APPROVAL_REQUIRED}`")
@@ -156,6 +161,13 @@ if nav_option == "📊 Dashboard Overview":
 elif nav_option == "✅ Human Approval Queue":
     st.title("✅ Lead Review & Approval Queue")
     st.caption("Review AI-qualified leads and personalized DM messages before outreach")
+
+    top_col1, top_col2 = st.columns([3, 1])
+    with top_col2:
+        if st.button("🔄 Reset All Leads to Pending", key="top_reset_btn", use_container_width=True):
+            r_cnt = db.reset_all_leads_to_pending()
+            st.success(f"Reset {r_cnt} leads!")
+            st.rerun()
 
     all_leads = db.get_all_leads()
     pending_leads = [l for l in all_leads if l.status in ("APPROVAL_PENDING", "APPROVED")]

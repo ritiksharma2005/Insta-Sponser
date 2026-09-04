@@ -59,9 +59,16 @@ class InstagramSender:
                 return True, "Message sent via Meta Graph API"
             else:
                 err_json = response.json() if response.text else {}
-                err_msg = err_json.get("error", {}).get("message", response.text)
+                err_obj = err_json.get("error", {})
+                err_code = err_obj.get("code")
+                err_msg = err_obj.get("message", response.text)
                 
-                # If Meta restricts direct API cold DM to unknown handles, mark as CONTACTED_LINK
+                # Check for Meta Authentication / Session / Token Expiry Errors (e.g. code 190, 102, 100)
+                if err_code in (190, 102, 100, 4) or any(term in str(err_msg).lower() for term in ("token", "session", "expired", "oauth")):
+                    logger.error(f"Meta Graph API Token Error ({err_code}): {err_msg}")
+                    return False, f"Meta Token Error (Code {err_code}): {err_msg}. Please update META_ACCESS_TOKEN in Streamlit Secrets!"
+
+                # If Meta restricts direct API cold DM to unknown handles, mark as CONTACTED with IG chat link fallback
                 ig_dm_url = f"https://ig.me/m/{handle_clean}"
                 lead.status = "CONTACTED"
                 lead.last_contacted = "2026-09-03"
