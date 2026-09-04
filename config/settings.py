@@ -27,13 +27,6 @@ class Settings:
     """Application Settings and Configuration parameters."""
     
     def __init__(self):
-        # System Flags
-        dry_str = get_config_val("DRY_RUN", "true").lower()
-        self.DRY_RUN: bool = dry_str in ("true", "1", "yes")
-        
-        app_str = get_config_val("APPROVAL_REQUIRED", "true").lower()
-        self.APPROVAL_REQUIRED: bool = app_str in ("true", "1", "yes")
-        
         self.LOG_LEVEL: str = get_config_val("LOG_LEVEL", "INFO")
         
         # Execution Limits
@@ -49,9 +42,7 @@ class Settings:
         self.SEARCH_API_KEY: str = get_config_val("SEARCH_API_KEY", "")
         self.SEARCH_ENGINE_ID: str = get_config_val("SEARCH_ENGINE_ID", "")
         
-        # Meta / Instagram
-        self.META_ACCESS_TOKEN: str = get_config_val("META_ACCESS_TOKEN", "")
-        self.INSTAGRAM_BUSINESS_ACCOUNT_ID: str = get_config_val("INSTAGRAM_BUSINESS_ACCOUNT_ID", "")
+        # Meta / Instagram App Credentials
         self.META_APP_ID: str = get_config_val("META_APP_ID", "")
         self.META_APP_SECRET: str = get_config_val("META_APP_SECRET", "")
         
@@ -63,6 +54,24 @@ class Settings:
         # Storage Paths
         self.BASE_DIR: Path = Path(__file__).resolve().parent.parent
         self.SQLITE_DB_PATH: Path = self.BASE_DIR / get_config_val("SQLITE_DB_PATH", "data/sponsor_engine.db")
+
+    @property
+    def DRY_RUN(self) -> bool:
+        dry_str = get_config_val("DRY_RUN", "true").lower()
+        return dry_str in ("true", "1", "yes")
+
+    @property
+    def APPROVAL_REQUIRED(self) -> bool:
+        app_str = get_config_val("APPROVAL_REQUIRED", "true").lower()
+        return app_str in ("true", "1", "yes")
+
+    @property
+    def META_ACCESS_TOKEN(self) -> str:
+        return get_config_val("META_ACCESS_TOKEN", "")
+
+    @property
+    def INSTAGRAM_BUSINESS_ACCOUNT_ID(self) -> str:
+        return get_config_val("INSTAGRAM_BUSINESS_ACCOUNT_ID", "17841467003339347")
 
 def get_settings() -> Settings:
     """Returns fresh application settings, dynamically reading st.secrets and env."""
