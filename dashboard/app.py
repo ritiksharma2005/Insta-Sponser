@@ -140,7 +140,8 @@ if st.sidebar.button("🔄 Reset Leads to Pending Queue", use_container_width=Tr
     st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.info(f"**DRY RUN Mode**: `{settings.DRY_RUN}`\n\n**Approval Required**: `{settings.APPROVAL_REQUIRED}`")
+tok_preview = f"`{settings.META_ACCESS_TOKEN[:12]}...`" if settings.META_ACCESS_TOKEN else "`MISSING`"
+st.sidebar.info(f"**DRY RUN Mode**: `{settings.DRY_RUN}`\n\n**Active Token**: {tok_preview}")
 
 # 1. OVERVIEW PAGE
 if nav_option == "📊 Dashboard Overview":
