@@ -112,6 +112,11 @@ nav_option = st.sidebar.radio(
 
 def safe_reset_leads(db_instance):
     """Safely resets all lead statuses to APPROVAL_PENDING across all environment versions."""
+    # Clear any stale session state error messages
+    keys_to_clear = [k for k in st.session_state.keys() if k.startswith("outreach_res_")]
+    for k in keys_to_clear:
+        del st.session_state[k]
+
     try:
         if hasattr(db_instance, "reset_all_leads_to_pending"):
             return db_instance.reset_all_leads_to_pending()
@@ -147,6 +152,11 @@ token_input = st.sidebar.text_input(
     help="Paste your fresh Meta Access Token here to use it immediately!"
 )
 if token_input.strip():
+    # If a new token is pasted, clear old failed outreach error messages from session state
+    if st.session_state.get("META_ACCESS_TOKEN") != token_input.strip():
+        keys_to_clear = [k for k in st.session_state.keys() if k.startswith("outreach_res_")]
+        for k in keys_to_clear:
+            del st.session_state[k]
     st.session_state["META_ACCESS_TOKEN"] = token_input.strip()
 
 settings = get_settings()
