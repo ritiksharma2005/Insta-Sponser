@@ -7,15 +7,18 @@ env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 def get_config_val(key: str, default: str = "") -> str:
-    """Helper to fetch config value from os.getenv or streamlit.secrets."""
-    val = os.getenv(key, "")
+    """Helper to fetch config value from streamlit.secrets first, then os.getenv."""
+    val = ""
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and key in st.secrets:
+            val = str(st.secrets[key])
+    except Exception:
+        pass
+
     if not val:
-        try:
-            import streamlit as st
-            if hasattr(st, "secrets") and key in st.secrets:
-                val = str(st.secrets[key])
-        except Exception:
-            pass
+        val = os.getenv(key, "")
+
     return val if val else default
 
 class Settings:
