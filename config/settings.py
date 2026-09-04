@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+VERIFIED_60DAY_TOKEN = "EAGOoduK7fBEBSQahwte8ulnILVoaQjzCN0FRtDAh41RPd8lC89mDH9LIpmTRVH43q0ESMZBocB7S6YoWAf8P6ygNb7MMbZC4xImGEvz34VSXCA43P7MYuFRZCaUZCrmwME8OUT6Qd3ZAY0GkXgQ8HZAtJKZBPW5rJ1os5qAoWqHvubz8tfBgcoLqch08BZBoYsIKMkX2dnl0xK7VZB1sBZCvo3L3Lr5EoVsNyru1pJdSs6yDoSWayejCZBfUWVpZABXprbnz7ihaiPHb5iGS9amqzP4ZD"
+
 def get_config_val(key: str, default: str = "") -> str:
     """Helper to fetch config value from st.session_state, streamlit.secrets, or os.getenv."""
     val = ""
@@ -14,12 +16,20 @@ def get_config_val(key: str, default: str = "") -> str:
         if hasattr(st, "session_state") and key in st.session_state and st.session_state[key]:
             val = str(st.session_state[key])
         elif hasattr(st, "secrets") and key in st.secrets:
-            val = str(st.secrets[key])
+            sec_val = str(st.secrets[key])
+            # If Streamlit Secrets holds the old expired token from Sept 1st, ignore it and use verified 60-day token
+            if key == "META_ACCESS_TOKEN" and (sec_val.startswith("EAGOoduk7fBEBSX") or sec_val.startswith("EAGOoduk7fBEBSfI")):
+                val = VERIFIED_60DAY_TOKEN
+            else:
+                val = sec_val
     except Exception:
         pass
 
     if not val:
         val = os.getenv(key, "")
+
+    if key == "META_ACCESS_TOKEN" and (not val or val.startswith("EAGOoduk7fBEBSX") or val.startswith("EAGOoduk7fBEBSfI")):
+        val = VERIFIED_60DAY_TOKEN
 
     return val if val else default
 
