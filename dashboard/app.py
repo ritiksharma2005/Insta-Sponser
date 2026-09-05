@@ -237,6 +237,17 @@ elif nav_option == "✅ Human Approval Queue":
                             st.error(f"⚠️ {msg}")
                         st.rerun()
 
+                    if st.button("🤖 Auto-Send via Browser Bot", key=f"bot_{lead.lead_id}", use_container_width=True):
+                        approval_mgr.approve_lead(lead.lead_id, custom_message=edited_msg)
+                        lead_obj = db.get_lead_by_id(lead.lead_id)
+                        with st.spinner("Launching Playwright Browser Bot to dispatch DM..."):
+                            success, msg, proof = sender.send_automated_browser_dm(lead_obj)
+                            if success:
+                                st.success(f"✅ {msg}")
+                            else:
+                                st.error(f"⚠️ {msg}")
+                            st.rerun()
+
                     if st.button("❌ Reject Lead", key=f"rej_{lead.lead_id}", use_container_width=True):
                         approval_mgr.reject_lead(lead.lead_id, reason="User rejected in dashboard")
                         st.error(f"Rejected '{lead.business_name}'.")
@@ -246,6 +257,12 @@ elif nav_option == "✅ Human Approval Queue":
                     if handle_clean and handle_clean != "Not Available":
                         ig_url = f"https://ig.me/m/{handle_clean}"
                         st.markdown(f'<a href="{ig_url}" target="_blank" style="display: block; text-align: center; background-color: #E1306C; color: white; padding: 8px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 8px;">💬 Open IG Chat</a>', unsafe_allow_html=True)
+
+                # DM Screenshot Proof Viewer
+                proof_path = Path(__file__).resolve().parent.parent / "data" / "outreach_proofs" / f"DM_{lead.lead_id}.png"
+                if proof_path.exists():
+                    with st.expander(f"📸 View Automated DM Proof for {lead.business_name}"):
+                        st.image(str(proof_path), caption=f"Proof of DM Dispatch for {lead.business_name}")
 
                 st.markdown("---")
 

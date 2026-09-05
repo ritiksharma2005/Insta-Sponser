@@ -4,15 +4,21 @@ from typing import Tuple, Dict, Any
 from config.settings import get_settings, reload_settings
 from sponsor_engine.database.models import Lead, OutreachRecord
 from sponsor_engine.database.sqlite_db import SQLiteDatabase
+from sponsor_engine.outreach.browser_dm_bot import BrowserDMBot
 
 logger = logging.getLogger(__name__)
 
 class InstagramSender:
-    """Outreach execution module supporting Dry Run simulation and Meta Graph API integration."""
+    """Outreach execution module supporting Dry Run simulation, Meta Graph API integration, and Automated Playwright Browser Bot."""
 
     def __init__(self, db: SQLiteDatabase = None):
         self.settings = get_settings()
         self.db = db or SQLiteDatabase()
+        self.browser_bot = BrowserDMBot(self.db)
+
+    def send_automated_browser_dm(self, lead: Lead) -> Tuple[bool, str, str]:
+        """Executes DM outreach via Playwright automated browser bot and returns screenshot proof."""
+        return self.browser_bot.send_direct_message(lead)
 
     def send_outreach(self, lead: Lead) -> Tuple[bool, str]:
         """

@@ -83,6 +83,14 @@ class Settings:
     def INSTAGRAM_BUSINESS_ACCOUNT_ID(self) -> str:
         return get_config_val("INSTAGRAM_BUSINESS_ACCOUNT_ID", "17841467003339347")
 
+    @property
+    def INSTAGRAM_USERNAME(self) -> str:
+        return get_config_val("INSTAGRAM_USERNAME", "news.nit_iit")
+
+    @property
+    def INSTAGRAM_PASSWORD(self) -> str:
+        return get_config_val("INSTAGRAM_PASSWORD", "")
+
 def get_settings() -> Settings:
     """Returns fresh application settings, dynamically reading st.secrets and env."""
     return Settings()
