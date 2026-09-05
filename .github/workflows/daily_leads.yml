@@ -28,10 +28,11 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Dependencies & Playwright Browser
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          playwright install chromium || true
 
       - name: Execute Daily Sponsorship Discovery
         env:
