@@ -104,7 +104,10 @@ class DailySponsorshipJob:
             from sponsor_engine.outreach.instagram_sender import InstagramSender
             sender = InstagramSender()
             for lead in top_leads:
-                sender.send_outreach(lead)
+                if sender.settings.INSTAGRAM_PASSWORD:
+                    sender.send_automated_browser_dm(lead)
+                else:
+                    sender.send_outreach(lead)
         except Exception as oe:
             logger.warning(f"Outreach dispatch warning: {oe}")
 
