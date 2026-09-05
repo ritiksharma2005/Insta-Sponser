@@ -33,7 +33,24 @@ def get_all_clients():
     return []
 
 def update_client_in_db(lead_id, status, notes=""):
-    """Updates status and notes for a client."""
+    """Updates status and notes for a client, and triggers background Meta API DM outreach if status is CONTACTED."""
+    # Attempt server-side Instagram DM outreach if requested
+    if status == "CONTACTED":
+        try:
+            from sponsor_engine.outreach.instagram_sender import InstagramSender
+            from sponsor_engine.database.models import Lead
+            sender = InstagramSender()
+            clients = get_all_clients()
+            match = next((c for c in clients if c.get("lead_id") == lead_id), None)
+            if match:
+                lead_obj = Lead(**match)
+                lead_obj.status = "APPROVED" # Temporary allow for sender method
+                success, msg = sender.send_outreach(lead_obj)
+                print(f"Server-side DM dispatch result for {lead_id}: {msg}")
+                notes = (notes or "") + f" [Server Auto DM: {msg}]"
+        except Exception as oe:
+            print(f"Auto DM dispatch error for {lead_id}: {oe}")
+
     if DB_PATH.exists():
         try:
             conn = sqlite3.connect(DB_PATH)
@@ -232,8 +249,8 @@ HTML_TEMPLATE = """
                                 <div>
                                     <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Follow-Up & Status Actions:</label>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="updateStatus('${client.lead_id}', 'CONTACTED')" class="col-span-2 px-3 py-2 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition text-left flex items-center gap-2">
-                                            <i class="fa-solid fa-check-circle"></i> Approve & Mark DM Sent
+                                        <button onclick="updateStatus('${client.lead_id}', 'CONTACTED')" class="col-span-2 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition text-left flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-paper-plane"></i> 🤖 Send Auto Instagram DM (No App Needed)
                                         </button>
                                         <button onclick="updateStatus('${client.lead_id}', 'REPLIED')" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-amber-300 transition text-left">💬 Mark Replied</button>
                                         <button onclick="updateStatus('${client.lead_id}', 'FOLLOWED_UP')" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-indigo-300 transition text-left">🔄 Sent Follow-Up</button>
