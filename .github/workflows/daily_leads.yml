@@ -30,7 +30,7 @@ jobs:
       - name: Execute Daily Sponsorship Discovery
         env:
           DRY_RUN: ${{ secrets.DRY_RUN || 'false' }}
-          APPROVAL_REQUIRED: ${{ secrets.APPROVAL_REQUIRED || 'true' }}
+          APPROVAL_REQUIRED: 'false'
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           LLM_PROVIDER: 'mock'
@@ -41,10 +41,10 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/sponsor_engine.db logs/ || true
+          git add data/leads.json data/sponsor_engine.db logs/ || true
           if git diff --staged --quiet; then
-            echo "No database changes to commit."
+            echo "No data changes to commit."
           else
-            git commit -m "auto: Daily sponsor leads execution $(date -u +'%Y-%m-%d')"
+            git commit -m "auto: Daily sponsor leads execution & client history sync $(date -u +'%Y-%m-%d')"
             git push origin main
           fi

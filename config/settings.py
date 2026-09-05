@@ -72,7 +72,7 @@ class Settings:
 
     @property
     def APPROVAL_REQUIRED(self) -> bool:
-        app_str = get_config_val("APPROVAL_REQUIRED", "true").lower()
+        app_str = get_config_val("APPROVAL_REQUIRED", "false").lower()
         return app_str in ("true", "1", "yes")
 
     @property

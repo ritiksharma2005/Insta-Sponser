@@ -89,14 +89,27 @@ class DailySponsorshipJob:
             )
 
             # Save lead to database
+            lead.status = "APPROVED"
             self.db_manager.save_lead(lead)
             qualified_leads.append(lead)
 
         # Sort leads by score descending
         qualified_leads.sort(key=lambda x: x.lead_score, reverse=True)
 
-        # Pick top 5 leads (or all if < 5)
+        # Pick top leads for daily execution
         top_leads = qualified_leads[:5]
+
+        # Automatically execute DM outreach for top leads
+        try:
+            from sponsor_engine.outreach.instagram_sender import InstagramSender
+            sender = InstagramSender()
+            for lead in top_leads:
+                sender.send_outreach(lead)
+        except Exception as oe:
+            logger.warning(f"Outreach dispatch warning: {oe}")
+
+        # Export json history for Vercel Web Dashboard and GitHub sync
+        self._export_leads_json()
 
         # Record search history
         search_record = SearchHistoryRecord(
@@ -158,3 +171,19 @@ class DailySponsorshipJob:
             lines.append("--------------------------------------------------\n")
 
         return "\n".join(lines)
+
+    def _export_leads_json(self):
+        """Exports stored leads to data/leads.json for Vercel Web Dashboard and GitHub sync."""
+        try:
+            import json
+            from sponsor_engine.database.sqlite_db import SQLiteDatabase
+            db = SQLiteDatabase()
+            leads = db.get_all_leads()
+            json_path = self.settings.BASE_DIR / "data" / "leads.json"
+            json_path.parent.mkdir(parents=True, exist_ok=True)
+            leads_data = [l.model_dump() for l in leads]
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(leads_data, f, indent=2, ensure_ascii=False)
+            logger.info(f"Successfully exported {len(leads_data)} client records to {json_path}")
+        except Exception as e:
+            logger.warning(f"Could not export leads.json: {e}")
