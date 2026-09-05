@@ -6,14 +6,20 @@ on:
     - cron: '30 3 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
+permissions:
+  contents: write
+
 jobs:
   run-daily-leads:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Set up Python 3.11
@@ -41,7 +47,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/leads.json data/sponsor_engine.db logs/ || true
+          git add data/leads.json || true
           if git diff --staged --quiet; then
             echo "No data changes to commit."
           else
