@@ -65,21 +65,38 @@ class BrowserDMBot:
                 context = browser.new_context(**context_args)
                 page = context.new_page()
 
-                # Navigate directly to IG chat link
-                page.goto(ig_dm_url, timeout=30000, wait_until="domcontentloaded")
+                # Step 1: Open Instagram home / login check
+                page.goto("https://www.instagram.com/", timeout=30000, wait_until="domcontentloaded")
                 time.sleep(3)
 
-                # Check if login is required
                 if "login" in page.url.lower() or page.locator("input[name='username']").is_visible():
                     if username and password:
-                        logger.info(f"[BrowserDMBot] Session expired. Logging in as @{username}...")
+                        logger.info(f"[BrowserDMBot] Logging in as @{username}...")
                         page.goto("https://www.instagram.com/accounts/login/", wait_until="domcontentloaded")
-                        time.sleep(2)
+                        time.sleep(3)
                         
                         page.fill("input[name='username']", username)
                         page.fill("input[name='password']", password)
                         page.click("button[type='submit']")
-                        time.sleep(5)
+                        time.sleep(7)
+
+                        # Handle "Save info" dialog
+                        try:
+                            save_info_btn = page.locator("button:has-text('Not Now'), button:has-text('Save Info'), div[role='button']:has-text('Not Now')")
+                            if save_info_btn.count() > 0:
+                                save_info_btn.first.click()
+                                time.sleep(2)
+                        except Exception:
+                            pass
+
+                        # Handle "Notifications" dialog
+                        try:
+                            notif_btn = page.locator("button:has-text('Not Now'), div[role='button']:has-text('Not Now')")
+                            if notif_btn.count() > 0:
+                                notif_btn.first.click()
+                                time.sleep(2)
+                        except Exception:
+                            pass
 
                         # Save storage state for future runs
                         try:
@@ -87,34 +104,55 @@ class BrowserDMBot:
                         except Exception as se:
                             logger.warning(f"Failed to save session state: {se}")
 
-                        page.goto(ig_dm_url, timeout=30000, wait_until="domcontentloaded")
-                        time.sleep(3)
-                    else:
-                        # Capture screenshot of chat screen
-                        page.screenshot(path=str(proof_filepath))
-                        browser.close()
-                        
-                        # Update DB record with proof
-                        lead.status = "CONTACTED"
-                        lead.last_contacted = time.strftime("%Y-%m-%d %H:%M:%S")
-                        lead.notes = (lead.notes or "") + f" [Automated DM Link Prepared: {ig_dm_url} | Proof: {proof_filename}]"
-                        self.db.insert_or_update_lead(lead)
-                        return True, f"1-Click Direct Chat ready for @{handle_clean}! Proof saved to {proof_filename}", proof_filename
+                # Step 2: Open Direct Composer
+                logger.info(f"[BrowserDMBot] Navigating to DM composer for @{handle_clean}...")
+                page.goto("https://www.instagram.com/direct/new/", wait_until="domcontentloaded")
+                time.sleep(4)
 
-                # Attempt message entry in direct chat
-                msg_area = page.locator("textarea, div[contenteditable='true']")
-                if msg_area.count() > 0:
-                    msg_area.first.fill(lead.personalized_message)
+                # Search for target username
+                search_input = page.locator("input[name='queryBox'], input[placeholder*='Search'], input[type='text']")
+                if search_input.count() > 0:
+                    search_input.first.fill(handle_clean)
+                    time.sleep(3)
+
+                    # Select result row
+                    result_row = page.locator("input[type='checkbox'], div[role='dialog'] span:has-text('" + handle_clean + "'), div[role='button']")
+                    if result_row.count() > 0:
+                        result_row.first.click()
+                        time.sleep(2)
+
+                    # Click Next/Chat
+                    next_btn = page.locator("button:has-text('Next'), div[role='button']:has-text('Next'), button:has-text('Chat')")
+                    if next_btn.count() > 0:
+                        next_btn.first.click()
+                        time.sleep(4)
+
+                # Type & Send Message
+                msg_input = page.locator("div[aria-label*='Message'], div[contenteditable='true'], textarea")
+                if msg_input.count() > 0:
+                    msg_input.first.click()
+                    time.sleep(1)
+                    msg_input.first.fill(lead.personalized_message)
                     time.sleep(1)
                     page.keyboard.press("Enter")
-                    time.sleep(2)
-                    logger.info(f"[BrowserDMBot] DM typed and sent to @{handle_clean}")
+                    time.sleep(3)
+                    logger.info(f"[BrowserDMBot] DM sent to @{handle_clean}")
+                else:
+                    # Fallback to direct IG Chat URL
+                    page.goto(ig_dm_url, wait_until="domcontentloaded")
+                    time.sleep(3)
+                    msg_area = page.locator("div[aria-label*='Message'], div[contenteditable='true'], textarea")
+                    if msg_area.count() > 0:
+                        msg_area.first.fill(lead.personalized_message)
+                        time.sleep(1)
+                        page.keyboard.press("Enter")
+                        time.sleep(3)
 
-                # Capture final screenshot proof
+                # Capture proof screenshot
                 page.screenshot(path=str(proof_filepath))
                 browser.close()
 
-                # Update database
+                # Update database & lead status
                 lead.status = "CONTACTED"
                 lead.last_contacted = time.strftime("%Y-%m-%d %H:%M:%S")
                 lead.notes = (lead.notes or "") + f" [Automated Browser DM Sent | Proof: {proof_filename}]"
