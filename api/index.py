@@ -197,7 +197,8 @@ HTML_TEMPLATE = """
                 const cleanHandle = (client.instagram || '').replace('@', '').trim();
                 const igUrl = cleanHandle ? `https://ig.me/m/${cleanHandle}` : '#';
                 
-                let statusBadgeClass = 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+                let statusBadgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
+                if (client.status === 'CONTACTED' || client.status === 'APPROVED') statusBadgeClass = 'bg-sky-500/10 text-sky-400 border-sky-500/20';
                 if (client.status === 'CONVERTED') statusBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                 if (client.status === 'REPLIED' || client.status === 'INTERESTED') statusBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
                 if (client.status === 'FOLLOWED_UP') statusBadgeClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
@@ -231,6 +232,9 @@ HTML_TEMPLATE = """
                                 <div>
                                     <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Follow-Up & Status Actions:</label>
                                     <div class="grid grid-cols-2 gap-2">
+                                        <button onclick="updateStatus('${client.lead_id}', 'CONTACTED')" class="col-span-2 px-3 py-2 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition text-left flex items-center gap-2">
+                                            <i class="fa-solid fa-check-circle"></i> Approve & Mark DM Sent
+                                        </button>
                                         <button onclick="updateStatus('${client.lead_id}', 'REPLIED')" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-amber-300 transition text-left">💬 Mark Replied</button>
                                         <button onclick="updateStatus('${client.lead_id}', 'FOLLOWED_UP')" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-indigo-300 transition text-left">🔄 Sent Follow-Up</button>
                                         <button onclick="updateStatus('${client.lead_id}', 'INTERESTED')" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-sky-300 transition text-left">⭐ Interested</button>
